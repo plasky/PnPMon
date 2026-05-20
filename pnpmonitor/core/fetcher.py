@@ -111,18 +111,19 @@ def _parse_publications(html: str, base_url: str, n: int) -> list[Publication]:
 
 
 def fetch_recent_publications(
-    session: requests.Session, n: int = 20
+    session: requests.Session, n: int = 20, page: int = 0
 ) -> list[Publication]:
-    """Return up to *n* recent publications from pnp.ligo.org.
+    """Return up to *n* publications from pnp.ligo.org starting at *page* (0-indexed).
 
-    Tries each URL in _PUB_URLS until one returns a non-redirect 200 response
-    with parseable content.  Raises RuntimeError if all fail.
+    Drupal paginates via ``?page=N``.  page=0 is the first/newest batch,
+    page=1 the next 20, and so on.  Raises RuntimeError if all URLs fail.
     """
     last_error: Optional[Exception] = None
-    for url in _PUB_URLS:
+    for base_url in _PUB_URLS:
+        sep = "&" if "?" in base_url else "?"
+        url = f"{base_url}{sep}page={page}"
         try:
             resp = session.get(url, timeout=20, allow_redirects=True)
-            # If we got bounced to the IdP, session has expired
             if PNP_ROOT not in resp.url:
                 raise RuntimeError("Session expired — please log in again.")
             if resp.status_code != 200:

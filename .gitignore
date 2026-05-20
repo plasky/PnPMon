@@ -1,0 +1,26 @@
+# Virtual environment
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# App data (contains personal session cookies and page history)
+~/.pnpmonitor/
+
+# macOS
+.DS_Store
+*.swp
+.AppleDouble
+.LSOverride
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace

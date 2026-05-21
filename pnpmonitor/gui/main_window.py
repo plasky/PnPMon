@@ -20,83 +20,104 @@ from .waveform_widget import WaveformWidget
 
 _STYLE = """
 QMainWindow, QWidget#central {
-    background-color: #0f0f1e;
+    background-color: #06080f;
 }
 QLabel#status_bar {
-    color: #888888;
+    color: #7a8fa8;
     font-size: 11px;
-    padding: 4px 10px;
-    background-color: #0c0c18;
-    border-bottom: 1px solid #1a1a30;
+    padding: 5px 14px;
+    background-color: #0b0f19;
+    border-bottom: 1px solid #1a2236;
 }
 QTableWidget {
-    background-color: #0f0f1e;
-    color: #cccccc;
-    gridline-color: #1a1a30;
+    background-color: #06080f;
+    color: #dde4ed;
+    gridline-color: transparent;
     border: none;
-    font-size: 12px;
-    selection-background-color: #1e2040;
+    font-size: 13px;
+    selection-background-color: #151c28;
+    alternate-background-color: #080c14;
 }
 QTableWidget::item {
-    padding: 6px 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #0e1522;
+}
+QTableWidget::item:selected {
+    background-color: #151c28;
+    color: #e0e8f4;
 }
 QHeaderView::section {
-    background-color: #0c0c18;
-    color: #00d4aa;
+    background-color: #0b0f19;
+    color: #00e0b0;
     border: none;
-    border-bottom: 1px solid #1a1a30;
-    padding: 6px 8px;
+    border-bottom: 1px solid #1a2236;
+    padding: 8px 12px;
     font-size: 11px;
-    font-weight: bold;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 QPlainTextEdit {
-    background-color: #080812;
-    color: #667799;
+    background-color: #040609;
+    color: #3d5168;
     border: none;
-    border-top: 1px solid #1a1a30;
-    font-family: monospace;
+    border-top: 1px solid #0e1522;
+    font-family: "SF Mono", "Menlo", "Monaco", monospace;
     font-size: 11px;
+    padding: 6px 10px;
+    selection-background-color: #1a2236;
+    selection-color: #00e0b0;
 }
 QPushButton {
-    background-color: #1a1a30;
-    color: #cccccc;
-    border: 1px solid #2a2a4a;
-    border-radius: 4px;
-    padding: 5px 14px;
+    background-color: #101520;
+    color: #b0bec8;
+    border: 1px solid #1c2b3d;
+    border-radius: 18px;
+    padding: 6px 18px;
     font-size: 12px;
+    font-weight: 500;
     min-width: 80px;
 }
 QPushButton:hover {
-    background-color: #202040;
-    border-color: #00d4aa;
-    color: #ffffff;
+    background-color: #17203080;
+    border-color: #2a3f55;
+    color: #e0e8f4;
+}
+QPushButton:pressed {
+    background-color: #0e1520;
 }
 QPushButton#check_btn {
-    background-color: #00d4aa22;
-    border-color: #00d4aa;
-    color: #00d4aa;
-    font-weight: bold;
+    background-color: #00e0b018;
+    border-color: #00e0b060;
+    color: #00e0b0;
+    font-weight: 600;
+    padding: 6px 20px;
 }
 QPushButton#check_btn:hover {
-    background-color: #00d4aa44;
+    background-color: #00e0b030;
+    border-color: #00e0b0;
 }
 QPushButton#login_btn {
-    color: #ffaa44;
-    border-color: #ffaa44;
+    color: #ffb830;
+    border-color: #ffb83050;
+    background-color: #ffb83010;
 }
 QPushButton#login_btn:hover {
-    background-color: #ffaa4422;
+    background-color: #ffb83025;
+    border-color: #ffb830;
 }
 QPushButton#search_btn {
-    color: #aa88ff;
-    border-color: #8855ff;
+    color: #b27fff;
+    border-color: #b27fff50;
+    background-color: #b27fff10;
 }
 QPushButton#search_btn:hover {
-    background-color: #8855ff22;
+    background-color: #b27fff25;
+    border-color: #b27fff;
 }
 QFrame#toolbar_frame {
-    background-color: #0c0c18;
-    border-bottom: 1px solid #1a1a30;
+    background-color: #0b0f19;
+    border-bottom: 1px solid #1a2236;
 }
 """
 
@@ -320,7 +341,7 @@ class MainWindow(QMainWindow):
 
             url_item = QTableWidgetItem(page["url"])
             url_item.setData(Qt.ItemDataRole.UserRole, page["url"])
-            url_item.setForeground(QColor("#6688bb"))
+            url_item.setForeground(QColor("#3d6080"))
             self._table.setItem(row, 1, url_item)
 
             changed_at = state.get("last_changed") or "—"
@@ -339,14 +360,17 @@ class MainWindow(QMainWindow):
 
             last_checked = state.get("last_checked")
             if last_checked:
-                status_text = "CHANGED" if state.get("last_changed") else "OK"
-                color = "#ffcc44" if state.get("last_changed") else "#44cc88"
+                status_text = "● CHANGED" if state.get("last_changed") else "● OK"
+                fg    = "#ffb830" if state.get("last_changed") else "#3ddc97"
+                bg    = "#ffb83018" if state.get("last_changed") else "#3ddc9718"
             else:
-                status_text = "PENDING"
-                color = "#888888"
+                status_text = "● PENDING"
+                fg = "#3d5168"
+                bg = "#3d516812"
 
             status_item = QTableWidgetItem(status_text)
-            status_item.setForeground(QColor(color))
+            status_item.setForeground(QColor(fg))
+            status_item.setBackground(QColor(bg))
             status_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self._table.setItem(row, 3, status_item)
 
@@ -357,17 +381,17 @@ class MainWindow(QMainWindow):
                 btn = QPushButton("✓  Mark as Read")
                 btn.setStyleSheet("""
                     QPushButton {
-                        background-color: #1a2a1a;
-                        color: #66cc66;
-                        border: 1px solid #336633;
-                        border-radius: 3px;
-                        padding: 3px 10px;
+                        background-color: #3ddc9715;
+                        color: #3ddc97;
+                        border: 1px solid #3ddc9740;
+                        border-radius: 14px;
+                        padding: 4px 14px;
                         font-size: 11px;
+                        font-weight: 500;
                     }
                     QPushButton:hover {
-                        background-color: #224422;
-                        border-color: #44cc44;
-                        color: #88ee88;
+                        background-color: #3ddc9730;
+                        border-color: #3ddc97;
                     }
                 """)
                 btn.clicked.connect(
@@ -381,11 +405,11 @@ class MainWindow(QMainWindow):
 
     def _update_status_bar(self) -> None:
         session_ok = self._auth.has_cookies()
-        session_text = "Session: Active" if session_ok else "Session: Not logged in"
-        session_color = "#00d4aa" if session_ok else "#ff6644"
+        session_text = "● Session active" if session_ok else "● Not logged in"
+        session_color = "#00e0b0" if session_ok else "#ff6b6b"
         self._status_label.setText(
             f'<span style="color:{session_color}">{session_text}</span>'
-            f'  ·  Double-click a row to open page in browser'
+            f'<span style="color:#3d5168">  ·  Double-click a row to open in browser</span>'
         )
         if session_ok:
             self._login_btn.setText("Re-login")

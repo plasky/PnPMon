@@ -9,9 +9,9 @@ from PyQt6.QtGui import QPixmap, QImage
 from PyQt6.QtCore import Qt
 
 
-_BG = "#0a0a1a"
-_FG = "#00d4aa"
-_TEXT_COLOR = "#ffffff"
+_BG = "#06080f"
+_FG = "#00e0b0"
+_TEXT_COLOR = "#e0e8f4"
 
 
 def _generate_chirp(n: int = 4000) -> tuple[np.ndarray, np.ndarray]:

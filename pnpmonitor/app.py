@@ -56,13 +56,25 @@ class PnPMonitorApp:
         menu = QMenu()
         menu.setStyleSheet("""
             QMenu {
-                background-color: #12121f;
-                color: #cccccc;
-                border: 1px solid #2a2a4a;
+                background-color: #0b0f19;
+                color: #dde4ed;
+                border: 1px solid #1a2236;
+                border-radius: 8px;
+                padding: 4px;
+                font-size: 13px;
+            }
+            QMenu::item {
+                padding: 7px 18px;
+                border-radius: 6px;
             }
             QMenu::item:selected {
-                background-color: #1e2040;
-                color: #ffffff;
+                background-color: #151c28;
+                color: #e0e8f4;
+            }
+            QMenu::separator {
+                height: 1px;
+                background-color: #1a2236;
+                margin: 4px 8px;
             }
         """)
 

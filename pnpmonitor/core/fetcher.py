@@ -77,18 +77,21 @@ def _extract_authors(container: Tag) -> list[str]:
     if not author_el or not isinstance(author_el, Tag):
         return []
 
+    def _clean(s: str) -> str:
+        return " ".join(s.split())  # collapse all internal whitespace
+
     # Pattern 1: individual field-item divs/spans (multi-value Drupal field)
     items = author_el.find_all(class_=re.compile(r"field-item", re.I))
     if items:
-        return [el.get_text(strip=True) for el in items if el.get_text(strip=True)]
+        return [_clean(el.get_text()) for el in items if el.get_text(strip=True)]
 
     # Pattern 2: delimited text in a single element
-    text = author_el.get_text(strip=True)
+    text = _clean(author_el.get_text())
     if re.search(r"[,;]", text):
-        return _split_author_string(text)
+        return [_clean(n) for n in _split_author_string(text) if n.strip()]
 
     # Pattern 3: single author as plain text
-    return [text] if text else []
+    return [_clean(text)] if text.strip() else []
 
 
 def _abs_url(href: str) -> str:

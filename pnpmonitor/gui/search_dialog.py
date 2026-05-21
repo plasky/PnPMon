@@ -298,8 +298,9 @@ class SearchDialog(QDialog):
             lines.append("  ·  ".join(meta_parts))
 
         item = QListWidgetItem("\n".join(lines))
-        item.setData(Qt.ItemDataRole.UserRole, pub.url)
+        item.setData(Qt.ItemDataRole.UserRole,     pub.url)
         item.setData(Qt.ItemDataRole.UserRole + 1, pub.title)
+        item.setData(Qt.ItemDataRole.UserRole + 2, _format_authors(pub.authors))
         return item
 
     # ── Actions ──────────────────────────────────────────────────────────────
@@ -320,9 +321,11 @@ class SearchDialog(QDialog):
         item = self._list.currentItem()
         if not item:
             return
-        url = item.data(Qt.ItemDataRole.UserRole)
-        label = item.data(Qt.ItemDataRole.UserRole + 1) or url
-        label = label[:60] + ("…" if len(label) > 60 else "")
+        url     = item.data(Qt.ItemDataRole.UserRole)
+        title   = item.data(Qt.ItemDataRole.UserRole + 1) or url
+        authors = item.data(Qt.ItemDataRole.UserRole + 2) or ""
+        label   = f"{authors}: {title}" if authors else title
+        label   = label[:80] + ("…" if len(label) > 80 else "")
         self._storage.add_page(url, label)
         self.add_to_monitor.emit(url, label)
         item.setText(item.text() + "  ✓ monitoring")

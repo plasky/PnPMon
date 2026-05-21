@@ -1,8 +1,7 @@
-from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-    QLineEdit, QSpinBox, QPushButton, QCheckBox,
-    QGroupBox, QFormLayout, QDialogButtonBox,
+    QSpinBox, QPushButton, QCheckBox,
+    QGroupBox, QFormLayout,
 )
 
 from ..core.storage import StorageManager
@@ -71,8 +70,6 @@ QPushButton#save_btn:hover {
 
 
 class SettingsDialog(QDialog):
-    settings_saved = pyqtSignal()
-
     def __init__(self, storage: StorageManager, parent=None) -> None:
         super().__init__(parent)
         self._storage = storage
@@ -130,5 +127,4 @@ class SettingsDialog(QDialog):
         self._storage.set_setting(
             "notify_on_change", "true" if self._notify_check.isChecked() else "false"
         )
-        self.settings_saved.emit()
         self.accept()

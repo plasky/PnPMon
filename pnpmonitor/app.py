@@ -38,12 +38,14 @@ class PnPMonitorApp:
         self._notifier.notify.connect(self._show_notification)
 
         # Wire Check Now button
-        self._window._check_btn.clicked.disconnect()
         self._window._check_btn.clicked.connect(self._scheduler.trigger_now)
 
         # Badge updates
         self._scheduler.check_finished.connect(lambda _: self._refresh_badge())
         self._window.page_marked_read.connect(self._refresh_badge)
+
+        # Apply interval changes immediately when settings are saved
+        self._window.settings_changed.connect(self._on_settings_changed)
 
     def _build_tray(self) -> QSystemTrayIcon:
         pixmap = make_tray_icon_pixmap(22)
@@ -103,6 +105,10 @@ class PnPMonitorApp:
     def _quit(self) -> None:
         self._scheduler.stop()
         self._qapp.quit()
+
+    def _on_settings_changed(self) -> None:
+        minutes = int(self._storage.get_setting("check_interval_minutes", "60"))
+        self._scheduler.update_interval(minutes)
 
     def _refresh_badge(self) -> None:
         self._set_tray_badge(self._storage.count_changed_pages())

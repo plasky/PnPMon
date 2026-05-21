@@ -263,9 +263,11 @@ class SearchDialog(QDialog):
             else f"Showing the {total} most recent entries from pnp.ligo.org"
         )
 
-        # Only show "Get More" if a full page came back (there may be more)
-        self._more_btn.setEnabled(len(pubs) == PAGE_SIZE)
-        if len(pubs) < PAGE_SIZE and not was_reset:
+        # Disable "Get More" only when the last fetch returned nothing —
+        # the site may serve fewer than PAGE_SIZE per page, but there can
+        # still be more pages available.
+        self._more_btn.setEnabled(len(pubs) > 0)
+        if len(pubs) == 0 and not was_reset:
             self._status.setText(f"{total} publication(s) loaded — no more available")
 
     def _on_error(self, msg: str) -> None:

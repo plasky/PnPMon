@@ -1,8 +1,7 @@
 from datetime import datetime
-from typing import Optional
 
 from PyQt6.QtCore import Qt, pyqtSignal, QUrl
-from PyQt6.QtGui import QDesktopServices, QFont, QColor
+from PyQt6.QtGui import QDesktopServices, QColor
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QTableWidget, QTableWidgetItem,
@@ -104,6 +103,7 @@ QFrame#toolbar_frame {
 
 class MainWindow(QMainWindow):
     page_marked_read = pyqtSignal()
+    settings_changed = pyqtSignal()  # emitted when settings dialog is saved
 
     def __init__(
         self,
@@ -150,7 +150,6 @@ class MainWindow(QMainWindow):
 
         self._check_btn = QPushButton("⟳  Check Now")
         self._check_btn.setObjectName("check_btn")
-        self._check_btn.clicked.connect(self.trigger_check)
         tb_layout.addWidget(self._check_btn)
 
         add_btn = QPushButton("+ Add Page")
@@ -202,12 +201,6 @@ class MainWindow(QMainWindow):
         layout.addWidget(self._log)
 
     # ── Slots ───────────────────────────────────────────────────────────────
-
-    def trigger_check(self) -> None:
-        # Called by the scheduler signal or the Check Now button
-        # The actual trigger goes through the scheduler; the button calls scheduler.trigger_now()
-        # This method is wired up externally in app.py
-        pass
 
     def on_check_started(self) -> None:
         self._check_btn.setEnabled(False)
@@ -273,7 +266,8 @@ class MainWindow(QMainWindow):
 
     def _on_settings(self) -> None:
         dlg = SettingsDialog(self._storage, self)
-        dlg.exec()
+        if dlg.exec():
+            self.settings_changed.emit()
 
     def _on_login(self) -> None:
         dlg = AuthDialog(self)

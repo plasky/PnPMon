@@ -121,7 +121,7 @@ def fetch_recent_publications(
     last_error: Optional[Exception] = None
     for base_url in _PUB_URLS:
         sep = "&" if "?" in base_url else "?"
-        url = f"{base_url}{sep}page={page}"
+        url = f"{base_url}{sep}items_per_page={n}&page={page}"
         try:
             resp = session.get(url, timeout=20, allow_redirects=True)
             if PNP_ROOT not in resp.url:

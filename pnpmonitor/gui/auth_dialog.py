@@ -3,7 +3,6 @@ from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton,
     QHBoxLayout, QSizePolicy,
 )
-from PyQt6.QtGui import QFont
 
 
 _STYLE = """

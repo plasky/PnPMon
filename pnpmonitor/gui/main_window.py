@@ -361,8 +361,8 @@ class MainWindow(QMainWindow):
             last_checked = state.get("last_checked")
             if last_checked:
                 status_text = "● CHANGED" if state.get("last_changed") else "● OK"
-                fg    = "#ffb830" if state.get("last_changed") else "#3ddc97"
-                bg    = "#ffb83018" if state.get("last_changed") else "#3ddc9718"
+                fg    = "#ffb830" if state.get("last_changed") else "#4a9e78"
+                bg    = "#ffb83018" if state.get("last_changed") else "#4a9e7818"
             else:
                 status_text = "● PENDING"
                 fg = "#3d5168"
@@ -381,17 +381,17 @@ class MainWindow(QMainWindow):
                 btn = QPushButton("✓  Mark as Read")
                 btn.setStyleSheet("""
                     QPushButton {
-                        background-color: #3ddc9715;
-                        color: #3ddc97;
-                        border: 1px solid #3ddc9740;
+                        background-color: #4a9e7815;
+                        color: #4a9e78;
+                        border: 1px solid #4a9e7840;
                         border-radius: 14px;
                         padding: 4px 14px;
                         font-size: 11px;
                         font-weight: 500;
                     }
                     QPushButton:hover {
-                        background-color: #3ddc9730;
-                        border-color: #3ddc97;
+                        background-color: #4a9e7830;
+                        border-color: #4a9e78;
                     }
                 """)
                 btn.clicked.connect(

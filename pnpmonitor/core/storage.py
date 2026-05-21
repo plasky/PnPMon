@@ -117,6 +117,13 @@ class StorageManager:
             )
             conn.commit()
 
+    def clear_last_changed(self, url: str) -> None:
+        with _connect() as conn:
+            conn.execute(
+                "UPDATE page_states SET last_changed = NULL WHERE url = ?", (url,)
+            )
+            conn.commit()
+
     def get_page_status(self, url: str) -> dict:
         with _connect() as conn:
             row = conn.execute(

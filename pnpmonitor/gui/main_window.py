@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QTableWidget, QTableWidgetItem,
     QHeaderView, QPlainTextEdit, QInputDialog, QMessageBox,
-    QFrame, QSizePolicy, QToolBar,
+    QFrame, QSizePolicy, QToolBar, QMenu,
 )
 
 from ..core.auth import AuthManager
@@ -189,6 +189,8 @@ class MainWindow(QMainWindow):
         self._table.setAlternatingRowColors(False)
         self._table.verticalHeader().setVisible(False)
         self._table.doubleClicked.connect(self._on_open_url)
+        self._table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self._table.customContextMenuRequested.connect(self._on_table_context_menu)
         layout.addWidget(self._table, stretch=1)
 
         # Log panel
@@ -304,6 +306,48 @@ class MainWindow(QMainWindow):
             if url:
                 QDesktopServices.openUrl(QUrl(url))
 
+    def _on_table_context_menu(self, pos) -> None:
+        row = self._table.rowAt(pos.y())
+        if row < 0:
+            return
+
+        url_item = self._table.item(row, 1)
+        status_item = self._table.item(row, 3)
+        if not url_item or not status_item:
+            return
+
+        url = url_item.data(Qt.ItemDataRole.UserRole)
+        is_changed = status_item.text() == "CHANGED"
+
+        menu = QMenu(self)
+        menu.setStyleSheet("""
+            QMenu {
+                background-color: #12121f;
+                color: #cccccc;
+                border: 1px solid #2a2a4a;
+            }
+            QMenu::item { padding: 6px 20px; }
+            QMenu::item:selected { background-color: #1e2040; color: #ffffff; }
+            QMenu::item:disabled { color: #444466; }
+            QMenu::separator { background-color: #2a2a4a; height: 1px; margin: 4px 0; }
+        """)
+
+        mark_read_action = menu.addAction("✓  Mark as Read")
+        mark_read_action.setEnabled(is_changed)
+        menu.addSeparator()
+        open_action = menu.addAction("Open in Browser")
+
+        action = menu.exec(self._table.viewport().mapToGlobal(pos))
+
+        if action == mark_read_action:
+            self._storage.clear_last_changed(url)
+            label_item = self._table.item(row, 0)
+            label = label_item.text() if label_item else url
+            self._refresh_table()
+            self._log_line(f"Marked as read: {label}")
+        elif action == open_action:
+            QDesktopServices.openUrl(QUrl(url))
+
     # ── Helpers ─────────────────────────────────────────────────────────────
 
     def _refresh_table(self) -> None:
@@ -363,7 +407,7 @@ class MainWindow(QMainWindow):
             self._login_btn.setText("Login")
 
     def _log_line(self, text: str) -> None:
-        ts = datetime.now().strftime("%H:%M:%S")
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self._log.appendPlainText(f"{ts}  {text}")
 
     def closeEvent(self, event) -> None:

@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ..core.auth import AuthManager
-from ..core.fetcher import Publication, fetch_recent_publications
+from ..core.fetcher import Publication, fetch_recent_publications, _format_authors
 from ..core.storage import StorageManager
 
 PAGE_SIZE = 20
@@ -283,14 +283,21 @@ class SearchDialog(QDialog):
     @staticmethod
     def _make_item(pub: Publication) -> QListWidgetItem:
         top_line = pub.title or "(no title)"
+
+        lines = [top_line]
+
+        authors = _format_authors(pub.authors)
         meta_parts: list[str] = []
+        if authors:
+            meta_parts.append(authors)
         if pub.doc_number:
             meta_parts.append(pub.doc_number)
         if pub.date:
             meta_parts.append(pub.date)
-        meta = "  ·  ".join(meta_parts)
+        if meta_parts:
+            lines.append("  ·  ".join(meta_parts))
 
-        item = QListWidgetItem(f"{top_line}\n{meta}" if meta else top_line)
+        item = QListWidgetItem("\n".join(lines))
         item.setData(Qt.ItemDataRole.UserRole, pub.url)
         item.setData(Qt.ItemDataRole.UserRole + 1, pub.title)
         return item

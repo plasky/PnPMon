@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 import requests
@@ -19,6 +19,7 @@ _PUB_URLS = [
 
 # Drupal document-number pattern: P-, G-, T-, D-, E-, etc. followed by digits
 _DOCNUM_RE = re.compile(r"\b[PGTDECL]-?\d{6,7}(?:-v\d+)?\b", re.I)
+_AUTHOR_CLASS_RE = re.compile(r"author", re.I)
 
 
 @dataclass
@@ -27,6 +28,67 @@ class Publication:
     url: str
     doc_number: str = ""
     date: str = ""
+    authors: list[str] = field(default_factory=list)
+
+
+def _format_authors(authors: list[str]) -> str:
+    if not authors:
+        return ""
+    if len(authors) <= 4:
+        return ", ".join(authors)
+    return f"{authors[0]}, {authors[1]}, et al."
+
+
+def _split_author_string(text: str) -> list[str]:
+    """Split a comma-or-semicolon-delimited author string.
+
+    Handles both 'Firstname Lastname' (split on comma) and
+    'Lastname, Firstname' formats (commas are both separators and
+    name-internal).  Semicolons are always treated as separators.
+    """
+    if ";" in text:
+        return [n.strip() for n in text.split(";") if n.strip()]
+
+    # Detect 'Lastname, Firstname' by checking whether tokens after commas
+    # look like initials or first names (≤ 15 chars, no comma of their own).
+    # If ALL post-comma tokens fit that pattern we treat pairs as one name.
+    parts = [p.strip() for p in text.split(",") if p.strip()]
+    if len(parts) <= 1:
+        return parts
+
+    # Heuristic: 'Last, First' format has single-word tokens after each comma
+    # (e.g. "Adams, E." or "Adams, Emma"), while 'Firstname Lastname' format
+    # has multi-word tokens (e.g. "Emma Adams") as separators.
+    even_tokens = parts[0::2]  # positions 0, 2, 4 … (last names)
+    odd_tokens  = parts[1::2]  # positions 1, 3, 5 … (first names / initials)
+    if odd_tokens and all(len(t.split()) == 1 for t in odd_tokens):
+        authors = []
+        for i, last in enumerate(even_tokens):
+            first = odd_tokens[i] if i < len(odd_tokens) else ""
+            authors.append(f"{last}, {first}" if first else last)
+        return authors
+
+    return parts
+
+
+def _extract_authors(container: Tag) -> list[str]:
+    """Pull author names from a Drupal view row, handling common field layouts."""
+    author_el = container.find(class_=_AUTHOR_CLASS_RE)
+    if not author_el or not isinstance(author_el, Tag):
+        return []
+
+    # Pattern 1: individual field-item divs/spans (multi-value Drupal field)
+    items = author_el.find_all(class_=re.compile(r"field-item", re.I))
+    if items:
+        return [el.get_text(strip=True) for el in items if el.get_text(strip=True)]
+
+    # Pattern 2: delimited text in a single element
+    text = author_el.get_text(strip=True)
+    if re.search(r"[,;]", text):
+        return _split_author_string(text)
+
+    # Pattern 3: single author as plain text
+    return [text] if text else []
 
 
 def _abs_url(href: str) -> str:
@@ -58,6 +120,7 @@ def _parse_publications(html: str, base_url: str, n: int) -> list[Publication]:
                     title=title, url=url,
                     doc_number=doc_m.group(0) if doc_m else "",
                     date=date,
+                    authors=_extract_authors(row),
                 ))
         if results:
             return results
@@ -77,6 +140,7 @@ def _parse_publications(html: str, base_url: str, n: int) -> list[Publication]:
                     title=title, url=url,
                     doc_number=doc_m.group(0) if doc_m else "",
                     date=date,
+                    authors=_extract_authors(tr),
                 ))
         if results:
             return results

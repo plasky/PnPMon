@@ -28,6 +28,16 @@ CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS publication_cache (
+    position     INTEGER PRIMARY KEY,
+    url          TEXT NOT NULL,
+    title        TEXT NOT NULL DEFAULT '',
+    doc_number   TEXT NOT NULL DEFAULT '',
+    date         TEXT NOT NULL DEFAULT '',
+    authors_json TEXT NOT NULL DEFAULT '[]',
+    fetched_at   TEXT NOT NULL
+);
 """
 
 _DEFAULTS = {
@@ -139,6 +149,56 @@ class StorageManager:
         if row is None:
             return {"last_checked": None, "last_changed": None}
         return dict(row)
+
+    # ── publication cache ──────────────────────────────────────────────────
+
+    def save_pub_cache(self, pubs: list[dict]) -> None:
+        """Replace the full cache with a new list."""
+        now = datetime.now().isoformat()
+        with _connect() as conn:
+            conn.execute("DELETE FROM publication_cache")
+            conn.executemany(
+                "INSERT INTO publication_cache "
+                "(position, url, title, doc_number, date, authors_json, fetched_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [
+                    (i, p["url"], p.get("title", ""), p.get("doc_number", ""),
+                     p.get("date", ""), p.get("authors_json", "[]"), now)
+                    for i, p in enumerate(pubs)
+                ],
+            )
+            conn.commit()
+
+    def append_pub_cache(self, pubs: list[dict]) -> None:
+        """Append new publications to the existing cache."""
+        now = datetime.now().isoformat()
+        with _connect() as conn:
+            row = conn.execute(
+                "SELECT COALESCE(MAX(position), -1) FROM publication_cache"
+            ).fetchone()
+            start = row[0] + 1
+            conn.executemany(
+                "INSERT OR IGNORE INTO publication_cache "
+                "(position, url, title, doc_number, date, authors_json, fetched_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [
+                    (start + i, p["url"], p.get("title", ""), p.get("doc_number", ""),
+                     p.get("date", ""), p.get("authors_json", "[]"), now)
+                    for i, p in enumerate(pubs)
+                ],
+            )
+            conn.commit()
+
+    def load_pub_cache(self) -> tuple[list[dict], Optional[str]]:
+        """Return (rows, fetched_at_iso) or ([], None) if empty."""
+        with _connect() as conn:
+            rows = conn.execute(
+                "SELECT url, title, doc_number, date, authors_json, fetched_at "
+                "FROM publication_cache ORDER BY position"
+            ).fetchall()
+        if not rows:
+            return [], None
+        return [dict(r) for r in rows], rows[0]["fetched_at"]
 
     # ── settings ───────────────────────────────────────────────────────────
 

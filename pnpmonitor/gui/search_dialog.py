@@ -1,6 +1,9 @@
 """Dialog that fetches and displays pnp.ligo.org publications with pagination."""
 from __future__ import annotations
 
+import json
+from datetime import datetime, timezone
+
 from PyQt6.QtCore import Qt, QThread, QUrl, pyqtSignal
 from PyQt6.QtGui import QDesktopServices, QColor
 from PyQt6.QtWidgets import (
@@ -13,6 +16,49 @@ from ..core.fetcher import Publication, fetch_recent_publications, _format_autho
 from ..core.storage import StorageManager
 
 PAGE_SIZE = 20
+_STALE_MINUTES = 60  # auto-refresh if cache is older than this
+
+
+def _cache_age_str(fetched_at_iso: str) -> str:
+    """Human-readable age string for a fetched_at ISO timestamp."""
+    try:
+        then = datetime.fromisoformat(fetched_at_iso)
+        delta = datetime.now() - then
+        minutes = int(delta.total_seconds() // 60)
+        if minutes < 1:
+            return "just now"
+        if minutes < 60:
+            return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+        hours = minutes // 60
+        if hours < 24:
+            return f"{hours} hour{'s' if hours != 1 else ''} ago"
+        return f"on {then.strftime('%Y-%m-%d')}"
+    except (ValueError, TypeError):
+        return "unknown"
+
+
+def _pub_to_dict(pub: Publication) -> dict:
+    return {
+        "url": pub.url,
+        "title": pub.title,
+        "doc_number": pub.doc_number,
+        "date": pub.date,
+        "authors_json": json.dumps(pub.authors),
+    }
+
+
+def _dict_to_pub(row: dict) -> Publication:
+    try:
+        authors = json.loads(row.get("authors_json", "[]"))
+    except (json.JSONDecodeError, TypeError):
+        authors = []
+    return Publication(
+        url=row["url"],
+        title=row.get("title", ""),
+        doc_number=row.get("doc_number", ""),
+        date=row.get("date", ""),
+        authors=authors,
+    )
 
 _STYLE = """
 QDialog {
@@ -150,7 +196,7 @@ class SearchDialog(QDialog):
         self.setMinimumSize(640, 540)
         self.setStyleSheet(_STYLE)
         self._build_ui()
-        self._start_fetch(reset=True)
+        self._load_or_fetch()
 
     # ── UI ──────────────────────────────────────────────────────────────────
 
@@ -221,22 +267,57 @@ class SearchDialog(QDialog):
 
         layout.addLayout(btn_row)
 
-    # ── Fetch ────────────────────────────────────────────────────────────────
+    # ── Cache + Fetch ─────────────────────────────────────────────────────────
 
-    def _start_fetch(self, reset: bool) -> None:
+    def _load_or_fetch(self) -> None:
+        """On open: show cache instantly, then silently refresh if stale."""
+        cached_rows, fetched_at = self._storage.load_pub_cache()
+        if cached_rows:
+            pubs = [_dict_to_pub(r) for r in cached_rows]
+            self._pubs = pubs
+            # Restore page counter so "Get More" fetches the next page
+            self._current_page = max(0, (len(pubs) - 1) // PAGE_SIZE)
+            for pub in pubs:
+                self._list.addItem(self._make_item(pub))
+            age = _cache_age_str(fetched_at)
+            total = len(pubs)
+            self._status.setText(f"{total} publication(s)  ·  cached {age}")
+            self._sub.setText(
+                f"Showing {total} entries from pnp.ligo.org"
+                if total > PAGE_SIZE
+                else f"Showing the {total} most recent entries from pnp.ligo.org"
+            )
+            self._more_btn.setEnabled(True)
+
+            # Auto-refresh only if the cache is stale
+            try:
+                then = datetime.fromisoformat(fetched_at)
+                stale = (datetime.now() - then).total_seconds() > _STALE_MINUTES * 60
+            except (ValueError, TypeError):
+                stale = True
+            if stale:
+                self._start_fetch(reset=True, silent=True)
+        else:
+            self._start_fetch(reset=True, silent=False)
+
+    def _start_fetch(self, reset: bool, silent: bool = False) -> None:
         if reset:
             self._current_page = 0
-            self._pubs = []
-            self._list.clear()
+            if not silent:
+                self._pubs = []
+                self._list.clear()
 
-        self._open_btn.setEnabled(False)
-        self._monitor_btn.setEnabled(False)
+        if not silent:
+            self._open_btn.setEnabled(False)
+            self._monitor_btn.setEnabled(False)
+            self._more_btn.setEnabled(False)
         self._refresh_btn.setEnabled(False)
-        self._more_btn.setEnabled(False)
-        self._status.setText(
-            "Fetching publications…" if reset
-            else f"Loading more… (page {self._current_page + 1})"
-        )
+
+        if not silent:
+            self._status.setText(
+                "Fetching publications…" if reset
+                else f"Loading more…  (page {self._current_page + 1})"
+            )
 
         if self._thread and self._thread.isRunning():
             self._thread.terminate()
@@ -244,49 +325,59 @@ class SearchDialog(QDialog):
 
         self._thread = _FetchThread(self._auth, page=self._current_page)
         self._thread.results_ready.connect(
-            lambda pubs: self._on_results(pubs, reset)
+            lambda pubs: self._on_results(pubs, reset, silent)
         )
-        self._thread.error_occurred.connect(self._on_error)
+        self._thread.error_occurred.connect(lambda msg: self._on_error(msg, silent))
         self._thread.start()
 
     def _load_more(self) -> None:
         self._current_page += 1
-        self._start_fetch(reset=False)
+        self._start_fetch(reset=False, silent=False)
 
-    def _on_results(self, pubs: list, was_reset: bool) -> None:
+    def _on_results(self, pubs: list, was_reset: bool, was_silent: bool) -> None:
         self._refresh_btn.setEnabled(True)
+
+        if was_reset and not was_silent:
+            # Hard refresh: replace everything
+            self._pubs = []
+            self._list.clear()
+
         self._pubs.extend(pubs)
 
-        if not pubs and was_reset:
+        # Persist to cache
+        if was_reset:
+            self._storage.save_pub_cache([_pub_to_dict(p) for p in pubs])
+        else:
+            self._storage.append_pub_cache([_pub_to_dict(p) for p in pubs])
+
+        if not pubs and not self._pubs:
             self._status.setText("No publications found.")
             return
 
-        # Append the new items to the list
         for pub in pubs:
             self._list.addItem(self._make_item(pub))
 
         total = len(self._pubs)
-        self._status.setText(f"{total} publication(s) loaded")
+        self._status.setText(f"{total} publication(s)  ·  just updated")
         self._sub.setText(
             f"Showing {total} entries from pnp.ligo.org"
             if total > PAGE_SIZE
             else f"Showing the {total} most recent entries from pnp.ligo.org"
         )
-
-        # Disable "Get More" only when the last fetch returned nothing —
-        # the site may serve fewer than PAGE_SIZE per page, but there can
-        # still be more pages available.
         self._more_btn.setEnabled(len(pubs) > 0)
         if len(pubs) == 0 and not was_reset:
-            self._status.setText(f"{total} publication(s) loaded — no more available")
+            self._status.setText(f"{total} publication(s) — no more available")
 
-    def _on_error(self, msg: str) -> None:
+    def _on_error(self, msg: str, was_silent: bool) -> None:
         self._refresh_btn.setEnabled(True)
-        # On a "load more" error, revert the page counter so retry works
         if self._current_page > 0:
             self._current_page -= 1
+        if self._pubs:
+            # We have cached data — show a gentle warning rather than wiping the list
             self._more_btn.setEnabled(True)
-        self._status.setText(f"Error: {msg}")
+            self._status.setText(f"Could not refresh — showing cached data  ({msg})")
+        else:
+            self._status.setText(f"Error: {msg}")
 
     # ── Helpers ──────────────────────────────────────────────────────────────
 

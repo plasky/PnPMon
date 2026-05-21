@@ -51,9 +51,9 @@ def _format_author_surnames(authors: list[str]) -> str:
         return parts[-1] if parts else name
 
     surnames = [surname(a) for a in authors]
-    if len(surnames) <= 4:
-        return ", ".join(surnames)
-    return f"{surnames[0]}, {surnames[1]}, et al."
+    if len(surnames) == 1:
+        return surnames[0]
+    return f"{surnames[0]} et al."
 
 
 def _split_author_string(text: str) -> list[str]:

@@ -135,7 +135,6 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self._auth = auth
         self._storage = storage
-        self._checking = False
 
         self.setWindowTitle("LIGO P&P Monitor")
         self.setMinimumSize(720, 520)
@@ -375,7 +374,7 @@ class MainWindow(QMainWindow):
             self._table.setItem(row, 3, status_item)
 
             # Column 4: "Mark as Read" button, only shown for CHANGED rows
-            if status_text == "CHANGED":
+            if status_text == "● CHANGED":
                 url_for_btn = page["url"]
                 label_for_btn = page["label"] or url_for_btn
                 btn = QPushButton("✓  Mark as Read")

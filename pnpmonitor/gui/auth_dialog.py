@@ -1,7 +1,7 @@
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton,
-    QHBoxLayout, QSizePolicy,
+    QHBoxLayout,
 )
 
 

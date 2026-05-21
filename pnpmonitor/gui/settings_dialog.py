@@ -9,54 +9,54 @@ from ..core.storage import StorageManager
 
 _STYLE = """
 QDialog {
-    background-color: #06080f;
+    background-color: #111111;
 }
 QGroupBox {
-    background-color: #0b0f19;
-    border: 1px solid #1a2236;
+    background-color: #161616;
+    border: 1px solid #2a2a2a;
     border-radius: 10px;
     margin-top: 10px;
     padding: 14px 14px 10px 14px;
     font-weight: 600;
     font-size: 11px;
     letter-spacing: 0.5px;
-    color: #00e0b0;
+    color: #888888;
 }
 QGroupBox::title {
     subcontrol-origin: margin;
     left: 14px;
     padding: 0 6px;
-    color: #00e0b080;
+    color: #555555;
 }
 QLabel {
-    color: #7a8fa8;
+    color: #888888;
     font-size: 12px;
 }
 QSpinBox {
-    background-color: #101520;
-    color: #dde4ed;
-    border: 1px solid #1c2b3d;
+    background-color: #1a1a1a;
+    color: #e8e8e8;
+    border: 1px solid #2e2e2e;
     border-radius: 8px;
     padding: 6px 10px;
     font-size: 12px;
-    selection-background-color: #00e0b0;
-    selection-color: #06080f;
+    selection-background-color: #4f86e0;
+    selection-color: #ffffff;
     min-width: 120px;
 }
 QSpinBox:focus {
-    border-color: #00e0b060;
+    border-color: #4f86e060;
 }
 QSpinBox::up-button, QSpinBox::down-button {
     width: 20px;
     border: none;
-    background-color: #1a2236;
+    background-color: #252525;
     border-radius: 4px;
 }
 QSpinBox::up-button:hover, QSpinBox::down-button:hover {
-    background-color: #223048;
+    background-color: #333333;
 }
 QCheckBox {
-    color: #b0bec8;
+    color: #aaaaaa;
     font-size: 12px;
     spacing: 8px;
 }
@@ -64,21 +64,21 @@ QCheckBox::indicator {
     width: 18px;
     height: 18px;
     border-radius: 6px;
-    border: 1px solid #1c2b3d;
-    background-color: #101520;
+    border: 1px solid #2e2e2e;
+    background-color: #1a1a1a;
 }
 QCheckBox::indicator:checked {
-    background-color: #00e0b0;
-    border-color: #00e0b0;
+    background-color: #4f86e0;
+    border-color: #4f86e0;
     image: none;
 }
 QCheckBox::indicator:hover {
-    border-color: #00e0b060;
+    border-color: #4f86e060;
 }
 QPushButton {
-    background-color: #101520;
-    color: #b0bec8;
-    border: 1px solid #1c2b3d;
+    background-color: #1a1a1a;
+    color: #aaaaaa;
+    border: 1px solid #2e2e2e;
     border-radius: 16px;
     padding: 7px 20px;
     font-size: 12px;
@@ -86,19 +86,19 @@ QPushButton {
     min-width: 80px;
 }
 QPushButton:hover {
-    background-color: #17203080;
-    border-color: #2a3f55;
-    color: #e0e8f4;
+    background-color: #222222;
+    border-color: #444444;
+    color: #ececec;
 }
 QPushButton#save_btn {
-    background-color: #00e0b0;
-    color: #06080f;
+    background-color: #4f86e0;
+    color: #ffffff;
     font-weight: 700;
     border: none;
     padding: 7px 28px;
 }
 QPushButton#save_btn:hover {
-    background-color: #00f5c5;
+    background-color: #6a9de8;
 }
 """
 

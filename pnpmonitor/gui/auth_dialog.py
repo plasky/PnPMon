@@ -7,35 +7,35 @@ from PyQt6.QtWidgets import (
 
 _STYLE = """
 QDialog {
-    background-color: #06080f;
+    background-color: #111111;
 }
 QLabel {
-    color: #dde4ed;
+    color: #e8e8e8;
 }
 QLabel#heading {
-    color: #00e0b0;
+    color: #ececec;
     font-size: 17px;
     font-weight: 700;
     letter-spacing: -0.4px;
 }
 QLabel#info {
-    color: #5a7080;
+    color: #666666;
     font-size: 12px;
     line-height: 1.5;
 }
 QPushButton {
-    background-color: #101520;
-    color: #b0bec8;
-    border: 1px solid #1c2b3d;
+    background-color: #1a1a1a;
+    color: #aaaaaa;
+    border: 1px solid #2e2e2e;
     border-radius: 16px;
     padding: 7px 20px;
     font-size: 12px;
     font-weight: 500;
 }
 QPushButton:hover {
-    background-color: #17203080;
-    border-color: #2a3f55;
-    color: #e0e8f4;
+    background-color: #222222;
+    border-color: #444444;
+    color: #ececec;
 }
 """
 

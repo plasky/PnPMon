@@ -62,27 +62,27 @@ def _dict_to_pub(row: dict) -> Publication:
 
 _STYLE = """
 QDialog {
-    background-color: #06080f;
+    background-color: #111111;
 }
 QLabel#heading {
-    color: #00e0b0;
+    color: #ececec;
     font-size: 16px;
     font-weight: 700;
     letter-spacing: -0.3px;
 }
 QLabel#sub {
-    color: #3d5168;
+    color: #555555;
     font-size: 11px;
 }
 QLabel#status {
-    color: #5a7080;
+    color: #666666;
     font-size: 11px;
     font-style: italic;
 }
 QListWidget {
-    background-color: #080c14;
-    color: #dde4ed;
-    border: 1px solid #1a2236;
+    background-color: #161616;
+    color: #e8e8e8;
+    border: 1px solid #2a2a2a;
     border-radius: 10px;
     font-size: 13px;
     outline: none;
@@ -94,16 +94,16 @@ QListWidget::item {
     margin: 1px 0;
 }
 QListWidget::item:selected {
-    background-color: #151c28;
-    color: #e0e8f4;
+    background-color: #4f86e018;
+    color: #f2f2f2;
 }
 QListWidget::item:hover {
-    background-color: #0e1520;
+    background-color: #1f1f1f;
 }
 QPushButton {
-    background-color: #101520;
-    color: #b0bec8;
-    border: 1px solid #1c2b3d;
+    background-color: #1a1a1a;
+    color: #aaaaaa;
+    border: 1px solid #2e2e2e;
     border-radius: 16px;
     padding: 6px 18px;
     font-size: 12px;
@@ -111,45 +111,46 @@ QPushButton {
     min-width: 80px;
 }
 QPushButton:hover {
-    background-color: #17203080;
-    border-color: #2a3f55;
-    color: #e0e8f4;
+    background-color: #222222;
+    border-color: #444444;
+    color: #ececec;
 }
 QPushButton:disabled {
-    color: #263040;
-    border-color: #111a24;
+    color: #333333;
+    border-color: #222222;
 }
 QPushButton#open_btn {
-    background-color: #00e0b018;
-    border-color: #00e0b060;
-    color: #00e0b0;
+    background-color: #4f86e018;
+    border-color: #4f86e050;
+    color: #7aa8f0;
     font-weight: 600;
 }
 QPushButton#open_btn:hover {
-    background-color: #00e0b030;
-    border-color: #00e0b0;
+    background-color: #4f86e030;
+    border-color: #4f86e0;
+    color: #a0c0f8;
 }
 QPushButton#monitor_btn {
-    background-color: #b27fff18;
-    border-color: #b27fff55;
-    color: #b27fff;
+    background-color: #4f86e010;
+    border-color: #4f86e040;
+    color: #7aa8f0;
 }
 QPushButton#monitor_btn:hover {
-    background-color: #b27fff30;
-    border-color: #b27fff;
+    background-color: #4f86e025;
+    border-color: #4f86e0;
+    color: #a0c0f8;
 }
 QPushButton#more_btn {
-    background-color: #00e0b008;
-    border-color: #00e0b030;
-    color: #00e0b080;
+    color: #666666;
+    border-color: #2a2a2a;
 }
 QPushButton#more_btn:hover {
-    background-color: #00e0b018;
-    border-color: #00e0b060;
-    color: #00e0b0;
+    background-color: #1f1f1f;
+    border-color: #3a3a3a;
+    color: #aaaaaa;
 }
 QFrame#divider {
-    background-color: #1a2236;
+    background-color: #2a2a2a;
     max-height: 1px;
 }
 """
@@ -430,7 +431,7 @@ class SearchDialog(QDialog):
         self._storage.add_page(url, label)
         self.add_to_monitor.emit(url, label)
         item.setText(item.text() + "  ✓ monitoring")
-        item.setForeground(QColor("#00e0b0"))
+        item.setForeground(QColor("#3d8a5a"))
         self._monitor_btn.setEnabled(False)
 
     def closeEvent(self, event) -> None:

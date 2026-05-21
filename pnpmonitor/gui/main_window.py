@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QTableWidget, QTableWidgetItem,
     QHeaderView, QPlainTextEdit, QInputDialog, QMessageBox,
-    QFrame, QSizePolicy, QToolBar, QMenu,
+    QFrame, QSizePolicy, QToolBar,
 )
 
 from ..core.auth import AuthManager
@@ -178,19 +178,18 @@ class MainWindow(QMainWindow):
         layout.addWidget(toolbar_frame)
 
         # Pages table
-        self._table = QTableWidget(0, 4)
-        self._table.setHorizontalHeaderLabels(["Label", "URL", "Last Changed", "Status"])
+        self._table = QTableWidget(0, 5)
+        self._table.setHorizontalHeaderLabels(["Label", "URL", "Last Changed", "Status", ""])
         self._table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         self._table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         self._table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self._table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self._table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
         self._table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self._table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self._table.setAlternatingRowColors(False)
         self._table.verticalHeader().setVisible(False)
         self._table.doubleClicked.connect(self._on_open_url)
-        self._table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self._table.customContextMenuRequested.connect(self._on_table_context_menu)
         layout.addWidget(self._table, stretch=1)
 
         # Log panel
@@ -306,47 +305,10 @@ class MainWindow(QMainWindow):
             if url:
                 QDesktopServices.openUrl(QUrl(url))
 
-    def _on_table_context_menu(self, pos) -> None:
-        row = self._table.rowAt(pos.y())
-        if row < 0:
-            return
-
-        url_item = self._table.item(row, 1)
-        status_item = self._table.item(row, 3)
-        if not url_item or not status_item:
-            return
-
-        url = url_item.data(Qt.ItemDataRole.UserRole)
-        is_changed = status_item.text() == "CHANGED"
-
-        menu = QMenu(self)
-        menu.setStyleSheet("""
-            QMenu {
-                background-color: #12121f;
-                color: #cccccc;
-                border: 1px solid #2a2a4a;
-            }
-            QMenu::item { padding: 6px 20px; }
-            QMenu::item:selected { background-color: #1e2040; color: #ffffff; }
-            QMenu::item:disabled { color: #444466; }
-            QMenu::separator { background-color: #2a2a4a; height: 1px; margin: 4px 0; }
-        """)
-
-        mark_read_action = menu.addAction("✓  Mark as Read")
-        mark_read_action.setEnabled(is_changed)
-        menu.addSeparator()
-        open_action = menu.addAction("Open in Browser")
-
-        action = menu.exec(self._table.viewport().mapToGlobal(pos))
-
-        if action == mark_read_action:
-            self._storage.clear_last_changed(url)
-            label_item = self._table.item(row, 0)
-            label = label_item.text() if label_item else url
-            self._refresh_table()
-            self._log_line(f"Marked as read: {label}")
-        elif action == open_action:
-            QDesktopServices.openUrl(QUrl(url))
+    def _mark_as_read(self, url: str, label: str) -> None:
+        self._storage.clear_last_changed(url)
+        self._refresh_table()
+        self._log_line(f"Marked as read: {label}")
 
     # ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -390,6 +352,33 @@ class MainWindow(QMainWindow):
             status_item.setForeground(QColor(color))
             status_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self._table.setItem(row, 3, status_item)
+
+            # Column 4: "Mark as Read" button, only shown for CHANGED rows
+            if status_text == "CHANGED":
+                url_for_btn = page["url"]
+                label_for_btn = page["label"] or url_for_btn
+                btn = QPushButton("✓  Mark as Read")
+                btn.setStyleSheet("""
+                    QPushButton {
+                        background-color: #1a2a1a;
+                        color: #66cc66;
+                        border: 1px solid #336633;
+                        border-radius: 3px;
+                        padding: 3px 10px;
+                        font-size: 11px;
+                    }
+                    QPushButton:hover {
+                        background-color: #224422;
+                        border-color: #44cc44;
+                        color: #88ee88;
+                    }
+                """)
+                btn.clicked.connect(
+                    lambda checked, u=url_for_btn, l=label_for_btn: self._mark_as_read(u, l)
+                )
+                self._table.setCellWidget(row, 4, btn)
+            else:
+                self._table.setCellWidget(row, 4, None)
 
         self._table.resizeRowsToContents()
 

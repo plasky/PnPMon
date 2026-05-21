@@ -1,6 +1,6 @@
 import sys
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt, QRect
+from PyQt6.QtGui import QBrush, QColor, QFont, QIcon, QPainter
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from .core.auth import AuthManager
@@ -40,6 +40,10 @@ class PnPMonitorApp:
         # Wire Check Now button
         self._window._check_btn.clicked.disconnect()
         self._window._check_btn.clicked.connect(self._scheduler.trigger_now)
+
+        # Badge updates
+        self._scheduler.check_finished.connect(lambda _: self._refresh_badge())
+        self._window.page_marked_read.connect(self._refresh_badge)
 
     def _build_tray(self) -> QSystemTrayIcon:
         pixmap = make_tray_icon_pixmap(22)
@@ -100,10 +104,47 @@ class PnPMonitorApp:
         self._scheduler.stop()
         self._qapp.quit()
 
+    def _refresh_badge(self) -> None:
+        self._set_tray_badge(self._storage.count_changed_pages())
+
+    def _set_tray_badge(self, count: int) -> None:
+        base = make_tray_icon_pixmap(22)
+
+        if count > 0:
+            # Paint onto a fresh copy so we don't mutate the cached pixmap
+            canvas = base.copy()
+            painter = QPainter(canvas)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+            diam = 10
+            x = canvas.width() - diam
+            y = 0
+
+            painter.setBrush(QBrush(QColor("#ff3333")))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(x, y, diam, diam)
+
+            painter.setPen(QColor("#ffffff"))
+            font = QFont()
+            font.setPixelSize(7)
+            font.setBold(True)
+            painter.setFont(font)
+            label = str(count) if count <= 9 else "9+"
+            painter.drawText(QRect(x, y, diam, diam), Qt.AlignmentFlag.AlignCenter, label)
+            painter.end()
+            base = canvas
+
+        self._tray.setIcon(QIcon(base))
+        self._tray.setToolTip(
+            f"LIGO P&P Monitor — {count} unread change(s)" if count > 0
+            else "LIGO P&P Monitor"
+        )
+
     def run(self) -> int:
         self._tray.show()
         self._window.show()
         self._scheduler.start()
+        self._refresh_badge()
         return self._qapp.exec()
 
 

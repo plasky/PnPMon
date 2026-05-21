@@ -103,6 +103,8 @@ QFrame#toolbar_frame {
 
 
 class MainWindow(QMainWindow):
+    page_marked_read = pyqtSignal()
+
     def __init__(
         self,
         auth: AuthManager,
@@ -309,6 +311,7 @@ class MainWindow(QMainWindow):
         self._storage.clear_last_changed(url)
         self._refresh_table()
         self._log_line(f"Marked as read: {label}")
+        self.page_marked_read.emit()
 
     # ── Helpers ─────────────────────────────────────────────────────────────
 

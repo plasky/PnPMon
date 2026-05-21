@@ -117,6 +117,13 @@ class StorageManager:
             )
             conn.commit()
 
+    def count_changed_pages(self) -> int:
+        with _connect() as conn:
+            row = conn.execute(
+                "SELECT COUNT(*) FROM page_states WHERE last_changed IS NOT NULL"
+            ).fetchone()
+        return row[0] if row else 0
+
     def clear_last_changed(self, url: str) -> None:
         with _connect() as conn:
             conn.execute(

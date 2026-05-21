@@ -45,7 +45,12 @@ class _PlaywrightThread(QThread):
         try:
             from playwright.sync_api import sync_playwright
             with sync_playwright() as pw:
-                browser = pw.chromium.launch(headless=False)
+                # Prefer the user's installed Chrome; fall back to bundled Chromium.
+                # (Safari cannot be automated for cookie extraction on macOS.)
+                try:
+                    browser = pw.chromium.launch(channel="chrome", headless=False)
+                except Exception:
+                    browser = pw.chromium.launch(headless=False)
                 context = browser.new_context()
                 page = context.new_page()
                 page.goto("https://pnp.ligo.org", timeout=30_000)
@@ -98,7 +103,7 @@ class AuthDialog(QDialog):
 
     def start_login(self) -> None:
         self._status.setText(
-            "Browser window opened — please log in to LIGO SSO.\n"
+            "Chrome will open — please log in to LIGO SSO.\n"
             "This dialog will close automatically after login."
         )
         self._cancel_btn.setEnabled(True)

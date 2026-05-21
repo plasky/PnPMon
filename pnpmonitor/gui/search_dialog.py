@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ..core.auth import AuthManager
-from ..core.fetcher import Publication, fetch_recent_publications, _format_authors
+from ..core.fetcher import Publication, fetch_recent_publications, _format_authors, _format_author_surnames
 from ..core.storage import StorageManager
 
 PAGE_SIZE = 20
@@ -401,7 +401,7 @@ class SearchDialog(QDialog):
         item = QListWidgetItem("\n".join(lines))
         item.setData(Qt.ItemDataRole.UserRole,     pub.url)
         item.setData(Qt.ItemDataRole.UserRole + 1, pub.title)
-        item.setData(Qt.ItemDataRole.UserRole + 2, _format_authors(pub.authors))
+        item.setData(Qt.ItemDataRole.UserRole + 2, _format_author_surnames(pub.authors))
         return item
 
     # ── Actions ──────────────────────────────────────────────────────────────

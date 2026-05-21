@@ -39,6 +39,23 @@ def _format_authors(authors: list[str]) -> str:
     return f"{authors[0]}, {authors[1]}, et al."
 
 
+def _format_author_surnames(authors: list[str]) -> str:
+    """Like _format_authors but uses only the surname of each author."""
+    if not authors:
+        return ""
+
+    def surname(name: str) -> str:
+        if "," in name:
+            return name.split(",")[0].strip()
+        parts = name.split()
+        return parts[-1] if parts else name
+
+    surnames = [surname(a) for a in authors]
+    if len(surnames) <= 4:
+        return ", ".join(surnames)
+    return f"{surnames[0]}, {surnames[1]}, et al."
+
+
 def _split_author_string(text: str) -> list[str]:
     """Split a comma-or-semicolon-delimited author string.
 
